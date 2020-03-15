@@ -10,46 +10,33 @@ namespace Andrew.DiscountDemo
     {
         static void Main(string[] args)
         {
-            var products = LoadProducts();
-            foreach(var p in products)
+            CartContext cart = new CartContext();
+            POS pos = new POS();
+
+            cart.PurchasedItems.AddRange(LoadProducts());
+            pos.ActivedRules.AddRange(LoadRules());
+
+            pos.CheckoutProcess(cart);
+
+            Console.WriteLine($"購買商品:");
+            Console.WriteLine($"---------------------------------------------------");
+            foreach(var p in cart.PurchasedItems)
             {
                 Console.WriteLine($"- {p.Name}      {p.Price:C}");
             }
-            Console.WriteLine($"Total: {CheckoutProcess(products.ToArray(), LoadRules().ToArray()):C}");
-        }
+            Console.WriteLine();
 
-
-        static decimal CheckoutProcess(Product[] products)
-        {
-            decimal amount = 0;
-            foreach(var p in products)
+            Console.WriteLine($"折扣:");
+            Console.WriteLine($"---------------------------------------------------");
+            foreach(var d in cart.AppliedDiscounts)
             {
-                amount += p.Price;
+                Console.WriteLine($"- {d.Rule.Name} ({d.Rule.Note}), discount: {d.Amount}");
             }
-            return amount;
+            Console.WriteLine();
+
+            Console.WriteLine($"---------------------------------------------------");
+            Console.WriteLine($"Total Price:   {cart.TotalPrice:C}");
         }
-
-        static decimal CheckoutProcess(Product[] products, RuleBase[] rules)
-        {
-            List<Discount> discounts = new List<Discount>();
-
-            foreach(var rule in rules)
-            {
-                discounts.AddRange(rule.Process(products));
-            }
-
-            decimal amount_without_discount = CheckoutProcess(products);
-            decimal total_discount = 0;
-
-            foreach(var discount in discounts)
-            {
-                total_discount += discount.Amount;
-                Console.WriteLine($"- 符合折扣 [{discount.RuleName}], 折抵 {discount.Amount} 元");
-            }
-
-            return amount_without_discount - total_discount;
-        }
-
 
 
         static IEnumerable<Product> LoadProducts()
@@ -63,7 +50,56 @@ namespace Andrew.DiscountDemo
         }
     }
 
+    public class CartContext
+    {
+        public readonly List<Product> PurchasedItems = new List<Product>();
+        public readonly List<Discount> AppliedDiscounts = new List<Discount>();
+        public decimal TotalPrice = 0m;
+    }
 
+    public class POS
+    {
+        public readonly List<RuleBase> ActivedRules = new List<RuleBase>();
+
+        public bool CheckoutProcess(CartContext cart)
+        {
+            // reset cart
+            cart.AppliedDiscounts.Clear();
+
+            cart.TotalPrice = cart.PurchasedItems.Select(p => p.Price).Sum();
+            foreach (var rule in this.ActivedRules)
+            {
+                var discounts = rule.Process(cart);
+                cart.AppliedDiscounts.AddRange(discounts);
+                cart.TotalPrice -= discounts.Select(d => d.Amount).Sum();
+            }
+            return true;
+        }
+    }
+    
+    public class Product
+    {
+        public int Id;
+        public string Name;
+        public decimal Price;
+        public HashSet<string> Tags;
+    }
+    
+    public class Discount
+    {
+        public int Id;
+        public RuleBase Rule;
+        public Product[] Products;
+        public decimal Amount;
+    }
+
+    public abstract class RuleBase
+    {
+        public int Id;
+        public string Name;
+        public string Note;
+        public abstract IEnumerable<Discount> Process(CartContext cart);
+    }
 
     public class BuyMoreBoxesDiscountRule : RuleBase
     {
@@ -79,11 +115,11 @@ namespace Andrew.DiscountDemo
             this.Note = "熱銷飲品 限時優惠";
         }
 
-        public override IEnumerable<Discount> Process(Product[] products)
+        public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched_products = new List<Product>();
 
-            foreach(var p in products)
+            foreach (var p in cart.PurchasedItems)
             {
                 matched_products.Add(p);
 
@@ -94,39 +130,11 @@ namespace Andrew.DiscountDemo
                     {
                         Amount = matched_products.Select(p => p.Price).Sum() * this.PercentOff / 100,
                         Products = matched_products.ToArray(),
-                        RuleName = this.Name,
+                        Rule = this,
                     };
                     matched_products.Clear();
                 }
             }
         }
-
-    }
-
-
-    
-
-    public class Product
-    {
-        public int Id;
-        public string Name;
-        public decimal Price;
-        public HashSet<string> Tags;
-    }
-    
-    public class Discount
-    {
-        public int Id;
-        public string RuleName;
-        public Product[] Products;
-        public decimal Amount;
-    }
-
-    public abstract class RuleBase
-    {
-        public int Id;
-        public string Name;
-        public string Note;
-        public abstract IEnumerable<Discount> Process(Product[] products);
     }
 }
