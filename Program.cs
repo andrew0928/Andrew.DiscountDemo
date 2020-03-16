@@ -47,6 +47,7 @@ namespace Andrew.DiscountDemo
         static IEnumerable<RuleBase> LoadRules()
         {
             yield return new BuyMoreBoxesDiscountRule(2, 12);   // 買 2 箱，折扣 12%
+            yield return new TotalPriceDiscountRule(1000, 100); // 滿 1000 折 100
         }
     }
 
@@ -135,6 +136,29 @@ namespace Andrew.DiscountDemo
                     matched_products.Clear();
                 }
             }
+        }
+    }
+
+    public class TotalPriceDiscountRule : RuleBase
+    {
+        public readonly decimal MinDiscountPrice = 0;
+        public readonly decimal DiscountAmount = 0;
+
+        public TotalPriceDiscountRule(decimal minPrice, decimal discount)
+        {
+            this.Name = $"折價券滿 {minPrice} 抵用 {discount}";
+            this.Note = $"每次交易限用一次";
+            this.MinDiscountPrice = minPrice;
+            this.DiscountAmount = discount;
+        }
+
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            if (cart.TotalPrice > this.MinDiscountPrice) yield return new Discount()
+            {
+                Amount = this.DiscountAmount,
+                Rule = this
+            };
         }
     }
 }
