@@ -13,7 +13,7 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts());
+            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products3.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
@@ -22,7 +22,7 @@ namespace Andrew.DiscountDemo
             Console.WriteLine($"---------------------------------------------------");
             foreach(var p in cart.PurchasedItems)
             {
-                Console.WriteLine($"- {p.Name}      {p.Price:C}");
+                Console.WriteLine($"- {p.Id,02}, [{p.SKU}] {p.Price,8:C}, {p.Name} {p.TagsValue}");
             }
             Console.WriteLine();
 
@@ -30,24 +30,40 @@ namespace Andrew.DiscountDemo
             Console.WriteLine($"---------------------------------------------------");
             foreach(var d in cart.AppliedDiscounts)
             {
-                Console.WriteLine($"- {d.Rule.Name} ({d.Rule.Note}), discount: {d.Amount}");
+                Console.WriteLine($"- 折抵 {d.Amount,8:C}, {d.Rule.Name} ({d.Rule.Note})");
+                foreach (var p in d.Products) Console.WriteLine($"  * 符合: {p.Id, 02}, [{p.SKU}], {p.Name} {p.TagsValue}");
+                Console.WriteLine();
             }
             Console.WriteLine();
 
             Console.WriteLine($"---------------------------------------------------");
-            Console.WriteLine($"Total Price:   {cart.TotalPrice:C}");
+            Console.WriteLine($"結帳金額:   {cart.TotalPrice:C}");
         }
 
 
-        static IEnumerable<Product> LoadProducts()
+        static int _seed = 0;
+        static IEnumerable<Product> LoadProducts(string filename = @"products.json")
         {
-            return JsonConvert.DeserializeObject<Product[]>(File.ReadAllText(@"products.json"));
+            foreach(var p in JsonConvert.DeserializeObject<Product[]>(File.ReadAllText(filename)))
+            {
+                _seed++;
+                p.Id = _seed;
+                yield return p;
+            }
         }
 
         static IEnumerable<RuleBase> LoadRules()
         {
-            yield return new BuyMoreBoxesDiscountRule(2, 12);   // 買 2 箱，折扣 12%
-            yield return new TotalPriceDiscountRule(1000, 100); // 滿 1000 折 100
+            //yield return new BuyMoreBoxesDiscountRule(2, 12);   // 買 2 箱，折扣 12%
+            //yield return new TotalPriceDiscountRule(1000, 100); // 滿 1000 折 100
+            //yield break;
+
+            yield return new DiscountRule1("衛生紙", 6, 100);
+            yield return new DiscountRule3("雞湯塊", 50);
+            yield return new DiscountRule4("同商品加購優惠", 10);
+            yield return new DiscountRule6("熱銷飲品", 12);
+
+            yield break;
         }
     }
 
@@ -81,9 +97,18 @@ namespace Andrew.DiscountDemo
     public class Product
     {
         public int Id;
+        public string SKU;
         public string Name;
         public decimal Price;
         public HashSet<string> Tags;
+
+        public string TagsValue { 
+            get
+            {
+                if (this.Tags == null || this.Tags.Count == 0) return "";
+                return ", Tags: " + string.Join(",", this.Tags.Select(t => '#' + t));
+            }
+        }
     }
     
     public class Discount
@@ -157,8 +182,143 @@ namespace Andrew.DiscountDemo
             if (cart.TotalPrice > this.MinDiscountPrice) yield return new Discount()
             {
                 Amount = this.DiscountAmount,
-                Rule = this
+                Rule = this,
+                Products = cart.PurchasedItems.ToArray()
             };
+        }
+    }
+
+
+    public class DiscountRule1 : RuleBase
+    {
+        private string TargetTag;
+        private int MinCount;
+        private decimal DiscountAmount;
+
+        public DiscountRule1(string targetTag, int minBuyCount, decimal discountAmount)
+        {
+            this.Name = "滿件折扣1";
+            this.Note = $"{targetTag}滿{minBuyCount}件折{discountAmount}";
+            this.TargetTag = targetTag;
+            this.MinCount = minBuyCount;
+            this.DiscountAmount = discountAmount;
+        }
+
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            List<Product> matched = new List<Product>();
+            foreach(var p in cart.PurchasedItems.Where( p => p.Tags.Contains(this.TargetTag) ))
+            {
+                matched.Add(p);
+                if (matched.Count == this.MinCount)
+                {
+                    yield return new Discount()
+                    {
+                        Amount = this.DiscountAmount,
+                        Products = matched.ToArray(),
+                        Rule = this
+                    };
+                    matched.Clear();
+                }
+            }
+        }
+    }
+    public class DiscountRule3 : RuleBase
+    {
+        private string TargetTag;
+        private int PercentOff;
+        public DiscountRule3(string targetTag, int percentOff)
+        {
+            this.Name = "滿件折扣3";
+            this.Note = $"{targetTag}第二件{10-percentOff/10}折";
+
+            this.TargetTag = targetTag;
+            this.PercentOff = percentOff;
+        }
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            List<Product> matched = new List<Product>();
+            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)))
+            {
+                matched.Add(p);
+                if (matched.Count == 2)
+                {
+                    yield return new Discount()
+                    {
+                        Amount = p.Price * this.PercentOff / 100,
+                        Products = matched.ToArray(),
+                        Rule = this
+                    };
+                    matched.Clear();
+                }
+            }
+        }
+    }
+    public class DiscountRule4 : RuleBase
+    {
+        private string TargetTag;
+        private decimal DiscountAmount;
+
+        public DiscountRule4(string tag, decimal amount)
+        {
+            this.Name = "同商品加購優惠";
+            this.Note = $"加{amount}元多一件";
+            this.TargetTag = tag;
+            this.DiscountAmount = amount;
+        }
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            List<Product> matched = new List<Product>();
+            foreach (var sku in cart.PurchasedItems.Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
+            {
+                matched.Clear();
+                foreach(var p in cart.PurchasedItems.Where(p=>p.SKU == sku))
+                {
+                    matched.Add(p);
+                    if (matched.Count  == 2)
+                    {
+                        yield return new Discount()
+                        {
+                            Products = matched.ToArray(),
+                            Amount = this.DiscountAmount,
+                            Rule = this
+                        };
+                        matched.Clear();
+                    }
+                }
+            }
+        }
+    }
+
+    public class DiscountRule6 : RuleBase
+    {
+        private string TargetTag;
+        private int PercentOff;
+        public DiscountRule6(string targetTag, int percentOff)
+        {
+            this.Name = "滿件折扣6";
+            this.Note = $"滿{targetTag}二件結帳{10 - percentOff / 10}折";
+
+            this.TargetTag = targetTag;
+            this.PercentOff = percentOff;
+        }
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            List<Product> matched = new List<Product>();
+            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
+            {
+                matched.Add(p);
+                if (matched.Count == 2)
+                {
+                    yield return new Discount()
+                    {
+                        Amount = matched.Sum(p => p.Price) * this.PercentOff / 100,
+                        Products = matched.ToArray(),
+                        Rule = this
+                    };
+                    matched.Clear();
+                }
+            }
         }
     }
 }
