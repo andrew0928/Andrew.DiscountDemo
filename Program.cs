@@ -1,4 +1,4 @@
-ï»¿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,33 +18,33 @@ namespace Andrew.DiscountDemo
 
             pos.CheckoutProcess(cart);
 
-            Console.WriteLine($"è³¼è²·å•†å“:");
+            Console.WriteLine($"ÁÊ¶R°Ó«~:");
             Console.WriteLine($"---------------------------------------------------");
-            foreach(var p in cart.PurchasedItems)
+            foreach (var p in cart.PurchasedItems)
             {
                 Console.WriteLine($"- {p.Id,02}, [{p.SKU}] {p.Price,8:C}, {p.Name} {p.TagsValue}");
             }
             Console.WriteLine();
 
-            Console.WriteLine($"æŠ˜æ‰£:");
+            Console.WriteLine($"§é¦©:");
             Console.WriteLine($"---------------------------------------------------");
-            foreach(var d in cart.AppliedDiscounts)
+            foreach (var d in cart.AppliedDiscounts)
             {
-                Console.WriteLine($"- æŠ˜æŠµ {d.Amount,8:C}, {d.Rule.Name} ({d.Rule.Note})");
-                foreach (var p in d.Products) Console.WriteLine($"  * ç¬¦åˆ: {p.Id, 02}, [{p.SKU}], {p.Name} {p.TagsValue}");
+                Console.WriteLine($"- §é©è {d.Amount,8:C}, {d.Rule.Name} ({d.Rule.Note})");
+                foreach (var p in d.Products) Console.WriteLine($"  * ²Å¦X: {p.Id,02}, [{p.SKU}], {p.Name} {p.TagsValue}");
                 Console.WriteLine();
             }
             Console.WriteLine();
 
             Console.WriteLine($"---------------------------------------------------");
-            Console.WriteLine($"çµå¸³é‡‘é¡:   {cart.TotalPrice:C}");
+            Console.WriteLine($"µ²±bª÷ÃB:   {cart.TotalPrice:C}");
         }
 
 
         static int _seed = 0;
         static IEnumerable<Product> LoadProducts(string filename = @"products.json")
         {
-            foreach(var p in JsonConvert.DeserializeObject<Product[]>(File.ReadAllText(filename)))
+            foreach (var p in JsonConvert.DeserializeObject<Product[]>(File.ReadAllText(filename)))
             {
                 _seed++;
                 p.Id = _seed;
@@ -54,16 +54,33 @@ namespace Andrew.DiscountDemo
 
         static IEnumerable<RuleBase> LoadRules()
         {
-            //yield return new BuyMoreBoxesDiscountRule(2, 12);   // è²· 2 ç®±ï¼ŒæŠ˜æ‰£ 12%
-            //yield return new TotalPriceDiscountRule(1000, 100); // æ»¿ 1000 æŠ˜ 100
+            //yield return new BuyMoreBoxesDiscountRule(2, 12);   // ¶R 2 ½c¡A§é¦© 12%
+            //yield return new TotalPriceDiscountRule(1000, 100); // º¡ 1000 §é 100
             //yield break;
 
-            yield return new DiscountRule1("è¡›ç”Ÿç´™", 6, 100);
-            yield return new DiscountRule3("é›æ¹¯å¡Š", 50);
-            yield return new DiscountRule4("åŒå•†å“åŠ è³¼å„ªæƒ ", 10);
-            yield return new DiscountRule6("ç†±éŠ·é£²å“", 12);
-
+            yield return new DiscountRule1("½Ã¥Í¯È", 6, 100);
+            yield return new DiscountRule3("Âû´ö¶ô", 50);
+            yield return new DiscountRule4("¦P°Ó«~¥[ÁÊÀu´f", 10);
+            yield return new DiscountRule6("¼ö¾P¶¼«~", 12);
+            yield return new DiscountRule5(new List<SpecialOffer>()
+            {
+                new SpecialOffer()
+                {
+                    Tags = new[]{ "«ü©wÂA­¹" , "«ü©w¶¼®Æ" },
+                    Amount = 39
+                },
+                new SpecialOffer()
+                {
+                    Tags = new[]{ "«ü©wÂA­¹" , "«ü©w¶¼®Æ" },
+                    Amount = 49
+                },new SpecialOffer()
+                {
+                    Tags = new[]{ "«ü©wÂA­¹" , "«ü©w¶¼®Æ" },
+                    Amount = 59
+                }
+            });
             yield break;
+
         }
     }
 
@@ -93,7 +110,7 @@ namespace Andrew.DiscountDemo
             return true;
         }
     }
-    
+
     public class Product
     {
         public int Id;
@@ -102,7 +119,8 @@ namespace Andrew.DiscountDemo
         public decimal Price;
         public HashSet<string> Tags;
 
-        public string TagsValue { 
+        public string TagsValue
+        {
             get
             {
                 if (this.Tags == null || this.Tags.Count == 0) return "";
@@ -110,7 +128,7 @@ namespace Andrew.DiscountDemo
             }
         }
     }
-    
+
     public class Discount
     {
         public int Id;
@@ -137,8 +155,8 @@ namespace Andrew.DiscountDemo
             this.BoxCount = boxes;
             this.PercentOff = percentOff;
 
-            this.Name = $"ä»» {this.BoxCount} ç®±çµå¸³ {100 - this.PercentOff} æŠ˜!";
-            this.Note = "ç†±éŠ·é£²å“ é™æ™‚å„ªæƒ ";
+            this.Name = $"¥ô {this.BoxCount} ½cµ²±b {100 - this.PercentOff} §é!";
+            this.Note = "¼ö¾P¶¼«~ ­­®ÉÀu´f";
         }
 
         public override IEnumerable<Discount> Process(CartContext cart)
@@ -151,7 +169,7 @@ namespace Andrew.DiscountDemo
 
                 if (matched_products.Count == this.BoxCount)
                 {
-                    // ç¬¦åˆæŠ˜æ‰£
+                    // ²Å¦X§é¦©
                     yield return new Discount()
                     {
                         Amount = matched_products.Select(p => p.Price).Sum() * this.PercentOff / 100,
@@ -171,8 +189,8 @@ namespace Andrew.DiscountDemo
 
         public TotalPriceDiscountRule(decimal minPrice, decimal discount)
         {
-            this.Name = $"æŠ˜åƒ¹åˆ¸æ»¿ {minPrice} æŠµç”¨ {discount}";
-            this.Note = $"æ¯æ¬¡äº¤æ˜“é™ç”¨ä¸€æ¬¡";
+            this.Name = $"§é»ù¨éº¡ {minPrice} ©è¥Î {discount}";
+            this.Note = $"¨C¦¸¥æ©ö­­¥Î¤@¦¸";
             this.MinDiscountPrice = minPrice;
             this.DiscountAmount = discount;
         }
@@ -197,8 +215,8 @@ namespace Andrew.DiscountDemo
 
         public DiscountRule1(string targetTag, int minBuyCount, decimal discountAmount)
         {
-            this.Name = "æ»¿ä»¶æŠ˜æ‰£1";
-            this.Note = $"{targetTag}æ»¿{minBuyCount}ä»¶æŠ˜{discountAmount}";
+            this.Name = "º¡¥ó§é¦©1";
+            this.Note = $"{targetTag}º¡{minBuyCount}¥ó§é{discountAmount}";
             this.TargetTag = targetTag;
             this.MinCount = minBuyCount;
             this.DiscountAmount = discountAmount;
@@ -207,7 +225,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach(var p in cart.PurchasedItems.Where( p => p.Tags.Contains(this.TargetTag) ))
+            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == this.MinCount)
@@ -229,8 +247,8 @@ namespace Andrew.DiscountDemo
         private int PercentOff;
         public DiscountRule3(string targetTag, int percentOff)
         {
-            this.Name = "æ»¿ä»¶æŠ˜æ‰£3";
-            this.Note = $"{targetTag}ç¬¬äºŒä»¶{10-percentOff/10}æŠ˜";
+            this.Name = "º¡¥ó§é¦©3";
+            this.Note = $"{targetTag}²Ä¤G¥ó{10 - percentOff / 10}§é";
 
             this.TargetTag = targetTag;
             this.PercentOff = percentOff;
@@ -261,21 +279,21 @@ namespace Andrew.DiscountDemo
 
         public DiscountRule4(string tag, decimal amount)
         {
-            this.Name = "åŒå•†å“åŠ è³¼å„ªæƒ ";
-            this.Note = $"åŠ {amount}å…ƒå¤šä¸€ä»¶";
+            this.Name = "¦P°Ó«~¥[ÁÊÀu´f";
+            this.Note = $"¥[{amount}¤¸¦h¤@¥ó";
             this.TargetTag = tag;
             this.DiscountAmount = amount;
         }
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var sku in cart.PurchasedItems.Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
+            foreach (var sku in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).Select(p => p.SKU).Distinct())
             {
                 matched.Clear();
-                foreach(var p in cart.PurchasedItems.Where(p=>p.SKU == sku))
+                foreach (var p in cart.PurchasedItems.Where(p => p.SKU == sku))
                 {
                     matched.Add(p);
-                    if (matched.Count  == 2)
+                    if (matched.Count == 2)
                     {
                         yield return new Discount()
                         {
@@ -296,8 +314,8 @@ namespace Andrew.DiscountDemo
         private int PercentOff;
         public DiscountRule6(string targetTag, int percentOff)
         {
-            this.Name = "æ»¿ä»¶æŠ˜æ‰£6";
-            this.Note = $"æ»¿{targetTag}äºŒä»¶çµå¸³{10 - percentOff / 10}æŠ˜";
+            this.Name = "º¡¥ó§é¦©6";
+            this.Note = $"º¡{targetTag}¤G¥óµ²±b{10 - percentOff / 10}§é";
 
             this.TargetTag = targetTag;
             this.PercentOff = percentOff;
@@ -305,7 +323,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
+            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p => p.Price))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -318,6 +336,69 @@ namespace Andrew.DiscountDemo
                     };
                     matched.Clear();
                 }
+            }
+        }
+    }
+
+    public class DiscountRule5 : RuleBase
+    {
+        private IEnumerable<SpecialOffer> _specialOffer;
+        public DiscountRule5(IEnumerable<SpecialOffer> specialOffersList)
+        {
+            this.Name = "À\À\¶W­È°t";
+            this.Note = $"«ü©wÂA­¹ + «ü©w¶¼®Æ ¯S»ù ( 39¤¸, 49¤¸, 59¤¸ )";
+            _specialOffer = specialOffersList;
+        }
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            foreach (var purchasedItem in cart.PurchasedItems.OrderByDescending(z => z.Price))
+            {
+                var matchOffer = _specialOffer.FirstOrDefault(m => m.TagTable.Any(z => purchasedItem.Tags.Contains(z)));
+
+                foreach (var tag in purchasedItem.Tags)
+                {
+                    if (matchOffer != null && matchOffer.ProductQueue.TryGetValue(tag, out var queue))
+                    {
+                        queue.Enqueue(new Product()
+                        {
+                            Name = purchasedItem.Name,
+                            Price = purchasedItem.Price,
+                            Id = purchasedItem.Id
+                        });
+
+                        if (matchOffer.ProductQueue.All(z => z.Value.Count > 0))
+                        {
+                            var products = matchOffer.ProductQueue.Select(x => x.Value.Dequeue()).ToList();
+                            yield return new Discount()
+                            {
+                                Amount = products.Sum(x => x.Price) - matchOffer.Amount,
+                                Products = products.ToArray(),
+                                Rule = this
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public class SpecialOffer
+    {
+        private HashSet<string> _tagTable;
+        public HashSet<string> TagTable
+        {
+            get
+            {
+                return _tagTable = (_tagTable ?? Tags.Select(tag => tag + Amount).ToHashSet());
+            }
+        }
+        public string[] Tags { get; set; }
+        public decimal Amount { get; set; }
+        private Dictionary<string, Queue<Product>> _productQueue;
+        public Dictionary<string, Queue<Product>> ProductQueue
+        {
+            get
+            {
+                return _productQueue = (_productQueue ?? TagTable.ToDictionary(x => x, x => new Queue<Product>()));
             }
         }
     }
