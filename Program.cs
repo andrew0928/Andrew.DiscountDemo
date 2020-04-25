@@ -66,16 +66,16 @@ namespace Andrew.DiscountDemo
             {
                 new SpecialOffer()
                 {
-                    Tags = new[]{ "指定鮮食" , "指定飲料" },
+                    Category = new[]{ "指定鮮食" , "指定飲料" },
                     Amount = 39
                 },
                 new SpecialOffer()
                 {
-                    Tags = new[]{ "指定鮮食" , "指定飲料" },
+                    Category = new[]{ "指定鮮食" , "指定飲料" },
                     Amount = 49
                 },new SpecialOffer()
                 {
-                    Tags = new[]{ "指定鮮食" , "指定飲料" },
+                    Category = new[]{ "指定鮮食" , "指定飲料" },
                     Amount = 59
                 }
             });
@@ -353,7 +353,7 @@ namespace Andrew.DiscountDemo
         { 
             foreach (var purchasedItem in cart.PurchasedItems.OrderByDescending(z => z.Price))
             {
-                var matchOffer = _specialOffer.FirstOrDefault(m => m.TagPrice.Any(tag => purchasedItem.Tags.Contains(tag)));
+                var matchOffer = _specialOffer.FirstOrDefault(m => m.Tags.Any(tag => purchasedItem.Tags.Contains(tag)));
 
                 foreach (var tag in purchasedItem.Tags)
                 {
@@ -378,22 +378,22 @@ namespace Andrew.DiscountDemo
     }
     public class SpecialOffer
     {
-        private HashSet<string> _tagPrice;
-        public HashSet<string> TagPrice
+        private HashSet<string> _tags;
+        public HashSet<string> Tags
         {
             get
             {
-                return _tagPrice = (_tagPrice ?? Tags.Select(tag => tag + Amount).ToHashSet());
+                return _tags = (_tags ?? Category.Select(tag => tag + Amount).ToHashSet());
             }
         }
-        public string[] Tags { get; set; }
+        public string[] Category { get; set; }
         public decimal Amount { get; set; }
         private Dictionary<string, Queue<Product>> _productQueue;
         public Dictionary<string, Queue<Product>> ProductQueue
         {
             get
             {
-                return _productQueue = (_productQueue ?? TagPrice.ToDictionary(x => x, x => new Queue<Product>()));
+                return _productQueue = (_productQueue ?? Tags.ToDictionary(x => x, x => new Queue<Product>()));
             }
         }
     }
