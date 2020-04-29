@@ -1,0 +1,70 @@
+﻿[
+  {
+    "sku": "RiceBall-00001",
+    "name": "肉鬆飯糰",
+    "price": 23,
+    "tags": [ "39鮮食" ]
+  },
+  {
+    "sku": "RiceBall-00001",
+    "name": "肉鬆飯糰",
+    "price": 23,
+    "tags": [ "39鮮食" ]
+  },
+  {
+    "sku": "RiceBall-00002",
+    "name": "鮪魚飯糰",
+    "price": 25,
+    "tags": [ "39鮮食" ]
+  },
+  {
+    "sku": "RiceBall-00003",
+    "name": "明太子龍蝦風味飯糰",
+    "price": 28,
+    "tags": [ "49鮮食" ]
+  },
+  {
+    "sku": "RiceBall-00003",
+    "name": "明太子龍蝦風味飯糰",
+    "price": 28,
+    "tags": [ "49鮮食" ]
+  },
+  {
+    "sku": "RiceBall-00004",
+    "name": "大口法香烤雞飯糰",
+    "price": 39,
+    "tags": [ "59鮮食" ]
+  },
+
+  {
+    "sku": "Coffee-00001",
+    "name": "小杯熱美式咖啡",
+    "price": 25,
+    "tags": [ "39飲料" ]
+  },
+  {
+    "sku": "Coffee-00001",
+    "name": "小杯熱美式咖啡",
+    "price": 25,
+    "tags": [ "39飲料" ]
+  },
+  {
+    "sku": "Coffee-00002",
+    "name": "中杯熱美式",
+    "price": 35,
+    "tags": [ "49飲料" ]
+  },
+  {
+    "sku": "Coffee-00003",
+    "name": "中杯熱拿鐵",
+    "price": 45,
+    "tags": [ "59飲料" ]
+  },
+  {
+    "sku": "Coffee-00003",
+    "name": "中杯熱拿鐵",
+    "price": 45,
+    "tags": [ "59飲料" ]
+  }
+
+]
