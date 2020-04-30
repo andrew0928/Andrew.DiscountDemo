@@ -75,7 +75,7 @@ namespace Andrew.DiscountDemo
 
     public class CartContext
     {
-        public List<Product> GetNonDiscountProduct(){
+        public List<Product> GetDiscountAbleProduct(){
             return PurchasedItems.Where(z=> z.DiscountType != (DiscountType.SingleOneDiscount | DiscountType.IsDiscounted))
                                  .ToList();
         }
@@ -93,7 +93,7 @@ namespace Andrew.DiscountDemo
             // reset cart
             cart.AppliedDiscounts.Clear();
 
-            cart.TotalPrice = cart.GetNonDiscountProduct().Select(p => p.Price).Sum();
+            cart.TotalPrice = cart.GetDiscountAbleProduct().Select(p => p.Price).Sum();
             foreach (var rule in this.ActivedRules)
             {
                 var discounts = rule.Process(cart).ToList();
@@ -164,7 +164,7 @@ namespace Andrew.DiscountDemo
         {
             List<Product> matched_products = new List<Product>();
 
-            foreach (var p in cart.GetNonDiscountProduct())
+            foreach (var p in cart.GetDiscountAbleProduct())
             {
                 matched_products.Add(p);
 
@@ -228,7 +228,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach(var p in cart.GetNonDiscountProduct().Where( p => p.Tags.Contains(this.TargetTag) ))
+            foreach(var p in cart.GetDiscountAbleProduct().Where( p => p.Tags.Contains(this.TargetTag) ))
             {
                 matched.Add(p);
                 if (matched.Count == this.MinCount)
@@ -260,7 +260,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.GetNonDiscountProduct().Where(p => p.Tags.Contains(this.TargetTag)))
+            foreach (var p in cart.GetDiscountAbleProduct().Where(p => p.Tags.Contains(this.TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -292,10 +292,10 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var sku in cart.GetNonDiscountProduct().Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
+            foreach (var sku in cart.GetDiscountAbleProduct().Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
             {
                 matched.Clear();
-                foreach(var p in cart.GetNonDiscountProduct().Where(p=>p.SKU == sku))
+                foreach(var p in cart.GetDiscountAbleProduct().Where(p=>p.SKU == sku))
                 {
                     matched.Add(p);
                     if (matched.Count  == 2)
@@ -329,7 +329,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.GetNonDiscountProduct().Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
+            foreach (var p in cart.GetDiscountAbleProduct().Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
