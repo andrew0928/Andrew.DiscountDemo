@@ -3,96 +3,112 @@
     "sku": "TISU-00235",
     "name": "舒潔 棉柔舒適捲筒衛生紙(280張x12捲/串)",
     "price": 179,
-    "tags": [ "衛生紙" ]
+    "tags": [ "衛生紙" ],
+    "DiscountType":1
   },
   {
     "sku": "TISU-00235",
     "name": "舒潔 棉柔舒適捲筒衛生紙(280張x12捲/串)",
     "price": 179,
-    "tags": [ "衛生紙" ]
+    "tags": [ "衛生紙" ],
+    "DiscountType":1
   },
   {
     "sku": "TISU-00235",
     "name": "舒潔 棉柔舒適捲筒衛生紙(280張x12捲/串)",
     "price": 179,
-    "tags": [ "衛生紙" ]
+    "tags": [ "衛生紙" ],
+    "DiscountType":1
   },
   {
     "sku": "TISU-00358",
     "name": "舒潔 萬用輕巧包抽取衛生紙(120抽x10包/串)",
     "price": 139,
-    "tags": [ "衛生紙" ]
+    "tags": [ "衛生紙" ],
+    "DiscountType":1
   },
   {
     "sku": "TISU-00358",
     "name": "舒潔 萬用輕巧包抽取衛生紙(120抽x10包/串)",
     "price": 139,
-    "tags": [ "衛生紙" ]
+    "tags": [ "衛生紙" ],
+    "DiscountType":1
   },
   {
     "sku": "TISU-00358",
     "name": "舒潔 萬用輕巧包抽取衛生紙(120抽x10包/串)",
     "price": 139,
-    "tags": [ "衛生紙" ]
+    "tags": [ "衛生紙" ],
+    "DiscountType":1
   },
   {
     "sku": "SOUP-31423",
     "name": "《康寶》雞湯塊100g(10塊/盒)",
     "price": 45,
-    "tags": [ "雞湯塊" ]
+    "tags": [ "雞湯塊","同商品加購優惠" ],
+    "DiscountType":2
   },
   {
     "sku": "SOUP-31423",
     "name": "《康寶》雞湯塊100g(10塊/盒)",
     "price": 45,
-    "tags": [ "雞湯塊" ]
+    "tags": [ "雞湯塊","同商品加購優惠" ],
+    "DiscountType":2
   },
   {
     "sku": "FMCP-00102",
     "name": "FMC-小分子氣泡水",
     "price": 29,
-    "tags": [ "同商品加購優惠" ]
+    "tags": [ "同商品加購優惠" ],
+    "DiscountType":1
   },
   {
     "sku": "FMCP-00102",
     "name": "FMC-小分子氣泡水",
     "price": 29,
-    "tags": [ "同商品加購優惠" ]
+    "tags": [ "同商品加購優惠" ],
+    "DiscountType":1
   },
   {
     "sku": "FMCP-00102",
     "name": "FMC-小分子氣泡水",
     "price": 29,
-    "tags": [ "同商品加購優惠" ]
+    "tags": [ "同商品加購優惠" ],
+    "DiscountType":1
   },
   {
     "sku": "FMCP-00102",
     "name": "FMC-小分子氣泡水",
     "price": 29,
-    "tags": [ "同商品加購優惠" ]
+    "tags": [ "同商品加購優惠" ],
+    "DiscountType":1
   },
   {
     "sku": "FMCP-00102",
     "name": "FMC-小分子氣泡水",
     "price": 29,
-    "tags": [ "同商品加購優惠" ]
+    "tags": [ "同商品加購優惠" ],
+    "DiscountType":1
   },
   {
     "sku": "DRNK-00159",
     "name": "《光泉》茉莉蜜茶300ml(24入/箱)",
     "price": 179,
-    "tags": [ "熱銷飲品" ]
+    "tags": [ "熱銷飲品"],
+    "DiscountType":1
   },
   {
     "sku": "DRNK-01201",
     "name": "[御茶園]特撰冰釀微甜綠茶 550ml(24入)",
     "price": 400,
-    "tags": [ "熱銷飲品" ]
+    "tags": [ "熱銷飲品" ],
+    "DiscountType":2
   },
   {
     "sku": "DRNK-01201",
     "name": "[御茶園]特撰冰釀微甜綠茶 550ml(24入)",
     "price": 400,
-    "tags": [ "熱銷飲品" ]
+    "tags": [ "熱銷飲品" ],
+    "DiscountType":2
   }
 ]
