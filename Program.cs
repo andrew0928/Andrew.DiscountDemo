@@ -13,7 +13,7 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products3.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products5.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
@@ -58,10 +58,12 @@ namespace Andrew.DiscountDemo
             //yield return new TotalPriceDiscountRule(1000, 100); // 滿 1000 折 100
             //yield break;
 
-            yield return new DiscountRule1("衛生紙", 6, 100);
+            yield return new DiscountRule1("衛生紙", 6, 100, "ex");
             yield return new DiscountRule3("雞湯塊", 50);
-            yield return new DiscountRule4("同商品加購優惠", 10);
+            yield return new DiscountRule4("同商品加購優惠", 10, "ex");
             yield return new DiscountRule6("熱銷飲品", 12);
+
+            yield return new DiscountRule7();
 
             yield break;
         }
@@ -72,6 +74,12 @@ namespace Andrew.DiscountDemo
         public readonly List<Product> PurchasedItems = new List<Product>();
         public readonly List<Discount> AppliedDiscounts = new List<Discount>();
         public decimal TotalPrice = 0m;
+
+        public IEnumerable<Product> GetVisiblePurchasedItems(string exclusiveTag)
+        {
+            if (string.IsNullOrEmpty(exclusiveTag)) return this.PurchasedItems;
+            return this.PurchasedItems.Where(p => !p.Tags.Contains(exclusiveTag));
+        }
     }
 
     public class POS
@@ -88,6 +96,13 @@ namespace Andrew.DiscountDemo
             {
                 var discounts = rule.Process(cart);
                 cart.AppliedDiscounts.AddRange(discounts);
+                if (rule.ExclusiveTag != null)
+                {
+                    foreach (var d in discounts)
+                    {
+                        foreach (var p in d.Products) p.Tags.Add(rule.ExclusiveTag);
+                    }
+                }
                 cart.TotalPrice -= discounts.Select(d => d.Amount).Sum();
             }
             return true;
@@ -124,6 +139,9 @@ namespace Andrew.DiscountDemo
         public int Id;
         public string Name;
         public string Note;
+
+        public string ExclusiveTag = null;
+
         public abstract IEnumerable<Discount> Process(CartContext cart);
     }
 
@@ -145,7 +163,7 @@ namespace Andrew.DiscountDemo
         {
             List<Product> matched_products = new List<Product>();
 
-            foreach (var p in cart.PurchasedItems)
+            foreach (var p in cart.GetVisiblePurchasedItems(this.ExclusiveTag))
             {
                 matched_products.Add(p);
 
@@ -195,19 +213,20 @@ namespace Andrew.DiscountDemo
         private int MinCount;
         private decimal DiscountAmount;
 
-        public DiscountRule1(string targetTag, int minBuyCount, decimal discountAmount)
+        public DiscountRule1(string targetTag, int minBuyCount, decimal discountAmount, string exclusiveTag = null)
         {
             this.Name = "滿件折扣1";
             this.Note = $"{targetTag}滿{minBuyCount}件折{discountAmount}";
             this.TargetTag = targetTag;
             this.MinCount = minBuyCount;
             this.DiscountAmount = discountAmount;
+            this.ExclusiveTag = exclusiveTag;
         }
 
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach(var p in cart.PurchasedItems.Where( p => p.Tags.Contains(this.TargetTag) ))
+            foreach(var p in cart.GetVisiblePurchasedItems(this.ExclusiveTag).Where( p => p.Tags.Contains(this.TargetTag) ))
             {
                 matched.Add(p);
                 if (matched.Count == this.MinCount)
@@ -238,7 +257,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)))
+            foreach (var p in cart.GetVisiblePurchasedItems(this.ExclusiveTag).Where(p => p.Tags.Contains(this.TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -259,20 +278,21 @@ namespace Andrew.DiscountDemo
         private string TargetTag;
         private decimal DiscountAmount;
 
-        public DiscountRule4(string tag, decimal amount)
+        public DiscountRule4(string tag, decimal amount, string exclusiveTag = null)
         {
             this.Name = "同商品加購優惠";
             this.Note = $"加{amount}元多一件";
             this.TargetTag = tag;
             this.DiscountAmount = amount;
+            this.ExclusiveTag = exclusiveTag;
         }
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var sku in cart.PurchasedItems.Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
+            foreach (var sku in cart.GetVisiblePurchasedItems(this.ExclusiveTag).Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
             {
                 matched.Clear();
-                foreach(var p in cart.PurchasedItems.Where(p=>p.SKU == sku))
+                foreach(var p in cart.GetVisiblePurchasedItems(this.ExclusiveTag).Where(p=>p.SKU == sku))
                 {
                     matched.Add(p);
                     if (matched.Count  == 2)
@@ -305,7 +325,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
+            foreach (var p in cart.GetVisiblePurchasedItems(this.ExclusiveTag).Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -317,6 +337,59 @@ namespace Andrew.DiscountDemo
                         Rule = this
                     };
                     matched.Clear();
+                }
+            }
+        }
+    }
+
+    public class DiscountRule7 : RuleBase
+    {
+        private (string drink, string food, decimal price)[] _discount_table = new (string, string, decimal)[]
+        {
+            ("超值配飲料39", "超值配鮮食39", 39m),
+            ("超值配飲料49", "超值配鮮食59", 49m),
+            ("超值配飲料49", "超值配鮮食49", 49m),
+            ("超值配飲料59", "超值配鮮食59", 59m),
+            ("超值配飲料59", "超值配鮮食49", 59m),
+        };
+
+        public DiscountRule7(string exclusiveTag = null)
+        {
+            this.Name = "配對折扣";
+            this.Note = $"餐餐超值選 39/49/59 優惠";
+
+            this.ExclusiveTag = exclusiveTag;
+        }
+
+        public override IEnumerable<Discount> Process(CartContext cart)
+        {
+            List<Product> purchased_items = new List<Product>(cart.GetVisiblePurchasedItems(this.ExclusiveTag));
+
+            foreach(var d in this._discount_table)
+            {
+                var drinks = purchased_items.Where(p => p.Tags.Contains(d.drink)).OrderByDescending(p => p.Price).ToArray();
+                var foods = purchased_items.Where(p => p.Tags.Contains(d.food)).OrderByDescending(p => p.Price).ToArray();
+
+                if (drinks.Count() == 0) continue;
+                if (foods.Count() == 0) continue;
+
+                for (int i = 0; true; i++)
+                {
+                    if (drinks.Length <= i) break;
+                    if (foods.Length <= i) break;
+
+                    if (purchased_items.Contains(drinks[i]) == false) break;
+                    if (purchased_items.Contains(foods[i]) == false) break;
+
+
+                    purchased_items.Remove(drinks[i]);
+                    purchased_items.Remove(foods[i]);
+                    yield return new Discount()
+                    {
+                        Rule = this,
+                        Products = new Product[] { drinks[i], foods[i] },
+                        Amount = drinks[i].Price + foods[i].Price - d.price
+                    };
                 }
             }
         }
