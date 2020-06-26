@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace andyDiscountDeno
+namespace Andrew.DiscountDemo
 {
     class Program
     {
@@ -13,7 +13,7 @@ namespace andyDiscountDeno
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@".\products4.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products4.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
