@@ -6,6 +6,12 @@ using System.Linq;
 
 namespace Andrew.DiscountDemo
 {
+    public enum DiscountType{
+        MultipleDiscountAble = 1,
+        SingleOneDiscount = 2,
+        IsDiscounted = 4
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -13,7 +19,7 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products3.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"products3.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
@@ -57,19 +63,23 @@ namespace Andrew.DiscountDemo
             //yield return new BuyMoreBoxesDiscountRule(2, 12);   // 買 2 箱，折扣 12%
             //yield return new TotalPriceDiscountRule(1000, 100); // 滿 1000 折 100
             //yield break;
-
-            yield return new DiscountRule1("衛生紙", 6, 100);
-            yield return new DiscountRule3("雞湯塊", 50);
-            yield return new DiscountRule4("同商品加購優惠", 10);
-            yield return new DiscountRule6("熱銷飲品", 12);
-
-            yield break;
+            IEnumerable<RuleBase> rules= new List<RuleBase>(){
+                new DiscountRule1("衛生紙", 6, 100){Priority = 4},
+                new DiscountRule3("雞湯塊", 50){Priority = 3},
+                new DiscountRule4("同商品加購優惠", 10){Priority = 2},
+                new DiscountRule6("熱銷飲品", 12){Priority = 1}
+            };
+            return rules.OrderBy(z=>z.Priority);
         }
     }
 
     public class CartContext
     {
-        public readonly List<Product> PurchasedItems = new List<Product>();
+        public List<Product> GetDiscountAbleProduct(){
+            return PurchasedItems.Where(z=> z.DiscountType != (DiscountType.SingleOneDiscount | DiscountType.IsDiscounted))
+                                 .ToList();
+        }
+        public readonly List<Product> PurchasedItems = new  List<Product>();
         public readonly List<Discount> AppliedDiscounts = new List<Discount>();
         public decimal TotalPrice = 0m;
     }
@@ -83,12 +93,13 @@ namespace Andrew.DiscountDemo
             // reset cart
             cart.AppliedDiscounts.Clear();
 
-            cart.TotalPrice = cart.PurchasedItems.Select(p => p.Price).Sum();
+            cart.TotalPrice = cart.GetDiscountAbleProduct().Select(p => p.Price).Sum();
             foreach (var rule in this.ActivedRules)
             {
-                var discounts = rule.Process(cart);
+                var discounts = rule.Process(cart).ToList();
                 cart.AppliedDiscounts.AddRange(discounts);
                 cart.TotalPrice -= discounts.Select(d => d.Amount).Sum();
+                discounts.ForEach(x=>x.SetDiscountStaus());
             }
             return true;
         }
@@ -102,6 +113,7 @@ namespace Andrew.DiscountDemo
         public decimal Price;
         public HashSet<string> Tags;
 
+        public DiscountType DiscountType { get; set; }
         public string TagsValue { 
             get
             {
@@ -117,6 +129,12 @@ namespace Andrew.DiscountDemo
         public RuleBase Rule;
         public Product[] Products;
         public decimal Amount;
+
+        public void SetDiscountStaus(){
+            foreach(var p in Products){
+                p.DiscountType |= DiscountType.IsDiscounted;
+            }
+        }
     }
 
     public abstract class RuleBase
@@ -124,6 +142,7 @@ namespace Andrew.DiscountDemo
         public int Id;
         public string Name;
         public string Note;
+        public int Priority { get; set; }
         public abstract IEnumerable<Discount> Process(CartContext cart);
     }
 
@@ -145,12 +164,13 @@ namespace Andrew.DiscountDemo
         {
             List<Product> matched_products = new List<Product>();
 
-            foreach (var p in cart.PurchasedItems)
+            foreach (var p in cart.GetDiscountAbleProduct())
             {
                 matched_products.Add(p);
 
                 if (matched_products.Count == this.BoxCount)
                 {
+                    
                     // 符合折扣
                     yield return new Discount()
                     {
@@ -158,6 +178,7 @@ namespace Andrew.DiscountDemo
                         Products = matched_products.ToArray(),
                         Rule = this,
                     };
+
                     matched_products.Clear();
                 }
             }
@@ -207,7 +228,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach(var p in cart.PurchasedItems.Where( p => p.Tags.Contains(this.TargetTag) ))
+            foreach(var p in cart.GetDiscountAbleProduct().Where( p => p.Tags.Contains(this.TargetTag) ))
             {
                 matched.Add(p);
                 if (matched.Count == this.MinCount)
@@ -218,6 +239,7 @@ namespace Andrew.DiscountDemo
                         Products = matched.ToArray(),
                         Rule = this
                     };
+
                     matched.Clear();
                 }
             }
@@ -238,7 +260,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)))
+            foreach (var p in cart.GetDiscountAbleProduct().Where(p => p.Tags.Contains(this.TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -249,6 +271,7 @@ namespace Andrew.DiscountDemo
                         Products = matched.ToArray(),
                         Rule = this
                     };
+
                     matched.Clear();
                 }
             }
@@ -269,10 +292,10 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var sku in cart.PurchasedItems.Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
+            foreach (var sku in cart.GetDiscountAbleProduct().Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
             {
                 matched.Clear();
-                foreach(var p in cart.PurchasedItems.Where(p=>p.SKU == sku))
+                foreach(var p in cart.GetDiscountAbleProduct().Where(p=>p.SKU == sku))
                 {
                     matched.Add(p);
                     if (matched.Count  == 2)
@@ -283,6 +306,7 @@ namespace Andrew.DiscountDemo
                             Amount = this.DiscountAmount,
                             Rule = this
                         };
+
                         matched.Clear();
                     }
                 }
@@ -305,7 +329,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
+            foreach (var p in cart.GetDiscountAbleProduct().Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -316,6 +340,7 @@ namespace Andrew.DiscountDemo
                         Products = matched.ToArray(),
                         Rule = this
                     };
+
                     matched.Clear();
                 }
             }
