@@ -13,7 +13,10 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products4.json"));
+            //cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products4.json"));
+            //cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\demo1.json"));
+            //cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\demo2.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\demo3.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
@@ -100,7 +103,7 @@ namespace Andrew.DiscountDemo
 
             foreach (var rule in this.ActivedRules)
             {
-                var discounts = rule.Process(cart);
+                var discounts = rule.Process(cart).ToArray();
                 cart.AppliedDiscounts.AddRange(discounts);
                 cart.TotalPrice -= discounts.Select(d => d.Amount).Sum();
             }
