@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,14 +13,14 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products3.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"products3.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
 
             Console.WriteLine($"購買商品:");
             Console.WriteLine($"---------------------------------------------------");
-            foreach(var p in cart.PurchasedItems)
+            foreach (var p in cart.PurchasedItems)
             {
                 Console.WriteLine($"- {p.Id,02}, [{p.SKU}] {p.Price,8:C}, {p.Name} {p.TagsValue}");
             }
@@ -28,10 +28,10 @@ namespace Andrew.DiscountDemo
 
             Console.WriteLine($"折扣:");
             Console.WriteLine($"---------------------------------------------------");
-            foreach(var d in cart.AppliedDiscounts)
+            foreach (var d in cart.AppliedDiscounts)
             {
                 Console.WriteLine($"- 折抵 {d.Amount,8:C}, {d.Rule.Name} ({d.Rule.Note})");
-                foreach (var p in d.Products) Console.WriteLine($"  * 符合: {p.Id, 02}, [{p.SKU}], {p.Name} {p.TagsValue}");
+                foreach (var p in d.Products) Console.WriteLine($"  * 符合: {p.Id,02}, [{p.SKU}], {p.Name} {p.TagsValue}");
                 Console.WriteLine();
             }
             Console.WriteLine();
@@ -44,12 +44,12 @@ namespace Andrew.DiscountDemo
         static int _seed = 0;
         static IEnumerable<Product> LoadProducts(string filename = @"products.json")
         {
-            foreach(var p in JsonConvert.DeserializeObject<Product[]>(File.ReadAllText(filename)))
+            foreach (var p in JsonConvert.DeserializeObject<Product[]>(File.ReadAllText(filename)))
             {
                 _seed++;
                 p.Id = _seed;
                 yield return p;
-            }
+            }　
         }
 
         static IEnumerable<RuleBase> LoadRules()
@@ -62,8 +62,25 @@ namespace Andrew.DiscountDemo
             yield return new DiscountRule3("雞湯塊", 50);
             yield return new DiscountRule4("同商品加購優惠", 10);
             yield return new DiscountRule6("熱銷飲品", 12);
-
+            yield return new DiscountRule5(new List<SpecialOffer>()
+            {
+                new SpecialOffer()
+                {
+                    Category = new[]{ "指定鮮食" , "指定飲料" },
+                    Amount = 39
+                },
+                new SpecialOffer()
+                {
+                    Category = new[]{ "指定鮮食" , "指定飲料" },
+                    Amount = 49
+                },new SpecialOffer()
+                {
+                    Category = new[]{ "指定鮮食" , "指定飲料" },
+                    Amount = 59
+                }
+            });
             yield break;
+
         }
     }
 
@@ -93,7 +110,7 @@ namespace Andrew.DiscountDemo
             return true;
         }
     }
-    
+
     public class Product
     {
         public int Id;
@@ -102,7 +119,8 @@ namespace Andrew.DiscountDemo
         public decimal Price;
         public HashSet<string> Tags;
 
-        public string TagsValue { 
+        public string TagsValue
+        {
             get
             {
                 if (this.Tags == null || this.Tags.Count == 0) return "";
@@ -110,7 +128,7 @@ namespace Andrew.DiscountDemo
             }
         }
     }
-    
+
     public class Discount
     {
         public int Id;
@@ -207,7 +225,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach(var p in cart.PurchasedItems.Where( p => p.Tags.Contains(this.TargetTag) ))
+            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == this.MinCount)
@@ -230,7 +248,7 @@ namespace Andrew.DiscountDemo
         public DiscountRule3(string targetTag, int percentOff)
         {
             this.Name = "滿件折扣3";
-            this.Note = $"{targetTag}第二件{10-percentOff/10}折";
+            this.Note = $"{targetTag}第二件{10 - percentOff / 10}折";
 
             this.TargetTag = targetTag;
             this.PercentOff = percentOff;
@@ -269,13 +287,13 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var sku in cart.PurchasedItems.Where(p=>p.Tags.Contains(this.TargetTag)).Select(p=>p.SKU).Distinct())
+            foreach (var sku in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).Select(p => p.SKU).Distinct())
             {
                 matched.Clear();
-                foreach(var p in cart.PurchasedItems.Where(p=>p.SKU == sku))
+                foreach (var p in cart.PurchasedItems.Where(p => p.SKU == sku))
                 {
                     matched.Add(p);
-                    if (matched.Count  == 2)
+                    if (matched.Count == 2)
                     {
                         yield return new Discount()
                         {
@@ -305,7 +323,7 @@ namespace Andrew.DiscountDemo
         public override IEnumerable<Discount> Process(CartContext cart)
         {
             List<Product> matched = new List<Product>();
-            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p=>p.Price))
+            foreach (var p in cart.PurchasedItems.Where(p => p.Tags.Contains(this.TargetTag)).OrderByDescending(p => p.Price))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
@@ -318,6 +336,64 @@ namespace Andrew.DiscountDemo
                     };
                     matched.Clear();
                 }
+            }
+        }
+    }
+
+    public class DiscountRule5 : RuleBase
+    {
+        private IEnumerable<SpecialOffer> _specialOffer;
+        public DiscountRule5(IEnumerable<SpecialOffer> specialOffersList)
+        {
+            this.Name = "餐餐超值配";
+            this.Note = $"指定鮮食 + 指定飲料 特價 ( 39元, 49元, 59元 )";
+            _specialOffer = specialOffersList;
+        }
+        public override IEnumerable<Discount> Process(CartContext cart)
+        { 
+            foreach (var purchasedItem in cart.PurchasedItems.OrderByDescending(z => z.Price))
+            {
+                var matchOffer = _specialOffer.FirstOrDefault(m => m.Tags.Any(tag => purchasedItem.Tags.Contains(tag)));
+
+                foreach (var tag in purchasedItem.Tags)
+                {
+                    if (matchOffer != null && matchOffer.ProductQueue.TryGetValue(tag, out var queue))
+                    {
+                        queue.Enqueue(purchasedItem);
+
+                        if (matchOffer.ProductQueue.All(z => z.Value.Count > 0))
+                        {
+                            var products = matchOffer.ProductQueue.Select(x => x.Value.Dequeue()).ToList();
+                            yield return new Discount()
+                            {
+                                Amount = products.Sum(x => x.Price) - matchOffer.Amount,
+                                Products = products.ToArray(),
+                                Rule = this
+                            };
+                        }
+                    }
+                }
+            }
+        }
+    }
+    public class SpecialOffer
+    {
+        private HashSet<string> _tags;
+        public HashSet<string> Tags
+        {
+            get
+            {
+                return _tags = (_tags ?? Category.Select(tag => tag + Amount).ToHashSet());
+            }
+        }
+        public string[] Category { get; set; }
+        public decimal Amount { get; set; }
+        private Dictionary<string, Queue<Product>> _productQueue;
+        public Dictionary<string, Queue<Product>> ProductQueue
+        {
+            get
+            {
+                return _productQueue = (_productQueue ?? Tags.ToDictionary(x => x, x => new Queue<Product>()));
             }
         }
     }
