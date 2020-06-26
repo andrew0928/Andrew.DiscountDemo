@@ -13,7 +13,7 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@"products3.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\demo3.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
