@@ -15,4 +15,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="PriceRules\" />
+  </ItemGroup>
+
 </Project>
