@@ -25,12 +25,12 @@ namespace Andrew.DiscountDemo.DiscountRules
 
         public override IEnumerable<Discount> Process(CartContext cart)
         {
-            List<Product> purchased_items = new List<Product>(cart.GetVisiblePurchasedItems(ExclusiveTag));
+            List<LineItem> purchased_items = new List<LineItem>(cart.GetVisibleLineItems(ExclusiveTag));
 
             foreach (var d in _discount_table)
             {
-                var drinks = purchased_items.Where(p => p.Tags.Contains(d.drink)).OrderByDescending(p => p.Price).ToArray();
-                var foods = purchased_items.Where(p => p.Tags.Contains(d.food)).OrderByDescending(p => p.Price).ToArray();
+                var drinks = purchased_items.Where(p => p.Tags.Contains(d.drink)).OrderByDescending(p => p.CheckoutPrice).ToArray();
+                var foods = purchased_items.Where(p => p.Tags.Contains(d.food)).OrderByDescending(p => p.CheckoutPrice).ToArray();
 
                 if (drinks.Count() == 0) continue;
                 if (foods.Count() == 0) continue;
@@ -49,8 +49,8 @@ namespace Andrew.DiscountDemo.DiscountRules
                     yield return new Discount()
                     {
                         Rule = this,
-                        Products = new Product[] { drinks[i], foods[i] },
-                        Amount = drinks[i].Price + foods[i].Price - d.price
+                        LineItems = new LineItem[] { drinks[i], foods[i] },
+                        Amount = drinks[i].CheckoutPrice + foods[i].CheckoutPrice - d.price
                     };
                 }
             }

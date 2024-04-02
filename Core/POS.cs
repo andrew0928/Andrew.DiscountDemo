@@ -13,7 +13,8 @@ namespace Andrew.DiscountDemo.Core
             // reset cart
             cart.AppliedDiscounts.Clear();
 
-            cart.TotalPrice = cart.PurchasedItems.Select(p => p.Price).Sum();
+            cart.TotalPrice = //cart.PurchasedItems.Select(p => p.Price).Sum();
+                cart.LineItems.Select(p => p.CheckoutPrice).Sum();
 
             foreach (var rule in ActivedRules)
             {
@@ -23,7 +24,7 @@ namespace Andrew.DiscountDemo.Core
                 {
                     foreach (var d in discounts)
                     {
-                        foreach (var p in d.Products) p.Tags.Add(rule.ExclusiveTag);
+                        foreach (var p in d.LineItems) p.Tags.Add(rule.ExclusiveTag);
                     }
                 }
                 cart.TotalPrice -= discounts.Select(d => d.Amount).Sum();

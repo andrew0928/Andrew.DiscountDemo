@@ -18,16 +18,16 @@ namespace Andrew.DiscountDemo.DiscountRules
         }
         public override IEnumerable<Discount> Process(CartContext cart)
         {
-            List<Product> matched = new List<Product>();
-            foreach (var p in cart.GetVisiblePurchasedItems(ExclusiveTag).Where(p => p.Tags.Contains(TargetTag)))
+            List<LineItem> matched = new List<LineItem>();
+            foreach (var p in cart.GetVisibleLineItems(ExclusiveTag).Where(p => p.Tags.Contains(TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == 2)
                 {
                     yield return new Discount()
                     {
-                        Amount = p.Price * PercentOff / 100,
-                        Products = matched.ToArray(),
+                        Amount = p.CheckoutPrice * PercentOff / 100,
+                        LineItems = matched.ToArray(),
                         Rule = this
                     };
                     matched.Clear();

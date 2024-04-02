@@ -22,7 +22,7 @@ namespace Andrew.DiscountDemo.DiscountRules
             {
                 Amount = DiscountAmount,
                 Rule = this,
-                Products = cart.PurchasedItems.ToArray()
+                LineItems = cart.LineItems.ToArray()
             };
         }
     }

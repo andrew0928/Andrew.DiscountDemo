@@ -6,7 +6,7 @@ namespace Andrew.DiscountDemo.DiscountRules
     {
         public int Id;
         public DiscountRuleBase Rule;
-        public Product[] Products;
+        public LineItem[] LineItems;
         public decimal Amount;
     }
 }

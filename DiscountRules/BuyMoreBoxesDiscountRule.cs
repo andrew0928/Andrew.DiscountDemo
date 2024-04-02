@@ -20,9 +20,10 @@ namespace Andrew.DiscountDemo.DiscountRules
 
         public override IEnumerable<Discount> Process(CartContext cart)
         {
-            List<Product> matched_products = new List<Product>();
+            //List<Product> matched_products = new List<Product>();
+            List<LineItem> matched_products = new List<LineItem>();
 
-            foreach (var p in cart.GetVisiblePurchasedItems(ExclusiveTag))
+            foreach (var p in cart.GetVisibleLineItems(ExclusiveTag))
             {
                 matched_products.Add(p);
 
@@ -31,8 +32,8 @@ namespace Andrew.DiscountDemo.DiscountRules
                     // 符合折扣
                     yield return new Discount()
                     {
-                        Amount = matched_products.Select(p => p.Price).Sum() * PercentOff / 100,
-                        Products = matched_products.ToArray(),
+                        Amount = matched_products.Select(p => p.CheckoutPrice).Sum() * PercentOff / 100,
+                        LineItems = matched_products.ToArray(),
                         Rule = this,
                     };
                     matched_products.Clear();

@@ -22,8 +22,8 @@ namespace Andrew.DiscountDemo.DiscountRules
 
         public override IEnumerable<Discount> Process(CartContext cart)
         {
-            List<Product> matched = new List<Product>();
-            foreach (var p in cart.GetVisiblePurchasedItems(ExclusiveTag).Where(p => p.Tags.Contains(TargetTag)))
+            List<LineItem> matched = new List<LineItem>();
+            foreach (var p in cart.GetVisibleLineItems(ExclusiveTag).Where(p => p.Tags.Contains(TargetTag)))
             {
                 matched.Add(p);
                 if (matched.Count == MinCount)
@@ -31,7 +31,7 @@ namespace Andrew.DiscountDemo.DiscountRules
                     yield return new Discount()
                     {
                         Amount = DiscountAmount,
-                        Products = matched.ToArray(),
+                        LineItems = matched.ToArray(),
                         Rule = this
                     };
                     matched.Clear();
