@@ -16,4 +16,11 @@ namespace Andrew.DiscountDemo.Core
             return PurchasedItems.Where(p => !p.Tags.Contains(exclusiveTag));
         }
     }
+
+    public class PurchasedItem
+    {
+        public int ProductId = 0;
+        public decimal CheckoutPrice = 0m;
+        public HashSet<string> Tags = new HashSet<string>();
+    }
 }

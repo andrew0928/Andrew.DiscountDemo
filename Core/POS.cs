@@ -14,6 +14,7 @@ namespace Andrew.DiscountDemo.Core
             cart.AppliedDiscounts.Clear();
 
             cart.TotalPrice = cart.PurchasedItems.Select(p => p.Price).Sum();
+
             foreach (var rule in ActivedRules)
             {
                 var discounts = rule.Process(cart);
