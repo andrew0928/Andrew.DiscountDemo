@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Andrew.DiscountDemo.DiscountRules;
+using Andrew.DiscountDemo.PriceRules;
 
 namespace Andrew.DiscountDemo.Core
 {
@@ -11,7 +12,10 @@ namespace Andrew.DiscountDemo.Core
         public readonly List<Product> PurchasedItems = new List<Product>();
 
         public readonly List<LineItem> LineItems = new List<LineItem>();
+
         public readonly List<Discount> AppliedDiscounts = new List<Discount>();
+        public readonly List<SetPrice> AppliedSetPrices = new List<SetPrice>();
+
         public decimal TotalPrice = 0m;
 
         [Obsolete("replace with lineitems", true)]

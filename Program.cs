@@ -1,5 +1,6 @@
 ﻿using Andrew.DiscountDemo.Core;
 using Andrew.DiscountDemo.DiscountRules;
+using Andrew.DiscountDemo.PriceRules;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -20,7 +21,8 @@ namespace Andrew.DiscountDemo
             LoadProducts(@"..\..\..\products5.json")
                 .ToList()
                 .ForEach(p => cart.AddLineItem(p));
-            pos.ActivedRules.AddRange(LoadDiscountRules());
+            pos.ActivedDiscountRules.AddRange(LoadDiscountRules());
+            pos.ActivedPriceRules.AddRange(LoadPriceRules());
 
             pos.CheckoutProcess(cart);
 
@@ -30,6 +32,15 @@ namespace Andrew.DiscountDemo
             foreach(var i in cart.LineItems)
             {
                 Console.WriteLine($"- {i.ProductId,02}, [{i.Product.SKU}] {i.CheckoutPrice,8:C}, {i.Product.Name} {i.TagsValue}");
+            }
+            Console.WriteLine();
+
+            Console.WriteLine($"優惠價:");
+            Console.WriteLine($"---------------------------------------------------");
+            foreach(var p in cart.AppliedSetPrices)
+            {
+                var item = cart.LineItems.FirstOrDefault(x => x.Id == p.LineItemId);
+                Console.WriteLine($"- 優惠價({p.Rule.Name}): {p.NewCheckoutPrice,8:C}, {item.ProductId,02}, [{item.Product.SKU}] {item.Product.Price,8:C} -> {p.NewCheckoutPrice,8:C} {string.Join(", ", p.AppendTags)}");
             }
             Console.WriteLine();
 
@@ -75,6 +86,20 @@ namespace Andrew.DiscountDemo
             yield return new DiscountRule6("熱銷飲品", 12);
 
             yield return new DiscountRule7();
+
+            yield break;
+        }
+
+        static IEnumerable<PriceRuleBase> LoadPriceRules()
+        {
+            yield return new AddOnPriceRule(
+                "鋼鐵人加價購",
+                new string[] { "FAMI-003" },
+                new AddOnPriceRule.PriceItem[] {
+                    new AddOnPriceRule.PriceItem() { MainProductSKU = null, AddOnProductSKU = "FAMI-101", Price = 99.00m },
+                    new AddOnPriceRule.PriceItem() { MainProductSKU = null, AddOnProductSKU = "FAMI-102", Price = 149.00m },
+                    new AddOnPriceRule.PriceItem() { MainProductSKU = null, AddOnProductSKU = "FAMI-103", Price = 199.00m },
+                });
 
             yield break;
         }
