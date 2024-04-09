@@ -39,7 +39,7 @@ namespace Andrew.DiscountDemo.Core
 
     public class LineItem
     {
-        private static int _seed = 0;
+        private static int _seed = 1;
 
         public LineItem(Product product, string[] tags = null)
         {
