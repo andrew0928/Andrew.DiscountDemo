@@ -30,7 +30,8 @@ namespace Andrew.DiscountDemo.Core
                 {
                     throw new Exception($"Price not found for {this.SKU} {this.Name}");
                 }
-                Console.WriteLine($"- {this.SKU} {this.Name} price: {selected_price.PriceValue} (since: {selected_price.Since}, {selected_price.Notes})");
+                // Console.WriteLine($"- {this.SKU} {this.Name} price: {selected_price.PriceValue} (since: {selected_price.Since}, {selected_price.Notes})");
+                this.PriceNotes = selected_price.Notes;
                 return selected_price.PriceValue;
             }
 
@@ -46,6 +47,7 @@ namespace Andrew.DiscountDemo.Core
                 });
             }
         }
+        public string PriceNotes { get; private set; }
 
         public HashSet<string> Tags;
         

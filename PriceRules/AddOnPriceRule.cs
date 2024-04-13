@@ -72,6 +72,7 @@ namespace Andrew.DiscountDemo.PriceRules
 
         public class PriceItem
         {
+            // 看起來不需要, 固定是 *
             public string MainProductSKU;
             public string AddOnProductSKU;
             public decimal Price;

@@ -24,9 +24,12 @@ namespace Andrew.DiscountDemo
 
             // todo: obsolete
             //cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products5.json"));
-            LoadProducts()
-                .ToList()
-                .ForEach(p => cart.AddLineItem(p));
+            var products = LoadProducts()
+                .ToList();
+
+            products.ForEach(p => Console.WriteLine($"- {p.Id,02}, [{p.SKU}] {p.Price,8:C} ({p.PriceNotes}), {p.Name} {string.Join(", ", p.Tags)}"));
+            products.ForEach(p => cart.AddLineItem(p));
+
             pos.ActivedDiscountRules.AddRange(LoadDiscountRules());
             pos.ActivedPriceRules.AddRange(LoadPriceRules());
 
