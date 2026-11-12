@@ -13,7 +13,7 @@ namespace Andrew.DiscountDemo
             CartContext cart = new CartContext();
             POS pos = new POS();
 
-            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products5.json"));
+            cart.PurchasedItems.AddRange(LoadProducts(@"..\..\..\products4.json"));
             pos.ActivedRules.AddRange(LoadRules());
 
             pos.CheckoutProcess(cart);
@@ -86,6 +86,12 @@ namespace Andrew.DiscountDemo
     {
         public readonly List<RuleBase> ActivedRules = new List<RuleBase>();
 
+        /// <summary>
+        /// Checkout Process
+        /// </summary>
+        /// <history>
+        /// 2021/06/09, lozenlin, modify, 修正當 Product 加上 rule.ExclusiveTag 之後，下次執行的 discounts 結果有變，造成結算總額錯誤的問題
+        /// </history>
         public bool CheckoutProcess(CartContext cart)
         {
             // reset cart
@@ -95,15 +101,16 @@ namespace Andrew.DiscountDemo
             foreach (var rule in this.ActivedRules)
             {
                 var discounts = rule.Process(cart);
-                cart.AppliedDiscounts.AddRange(discounts);
+                Discount[] discountsAry = discounts.ToArray();  //2021/06/09, lozenlin, modify
+                cart.AppliedDiscounts.AddRange(discountsAry);  //2021/06/09, lozenlin, modify
                 if (rule.ExclusiveTag != null)
                 {
-                    foreach (var d in discounts)
+                    foreach (var d in discountsAry) //2021/06/09, lozenlin, modify
                     {
                         foreach (var p in d.Products) p.Tags.Add(rule.ExclusiveTag);
                     }
                 }
-                cart.TotalPrice -= discounts.Select(d => d.Amount).Sum();
+                cart.TotalPrice -= discountsAry.Select(d => d.Amount).Sum();   //2021/06/09, lozenlin, modify
             }
             return true;
         }
@@ -300,7 +307,7 @@ namespace Andrew.DiscountDemo
                         yield return new Discount()
                         {
                             Products = matched.ToArray(),
-                            Amount = this.DiscountAmount,
+                            Amount = p.Price - this.DiscountAmount, //2021/06/09, lozenlin, modify, 修正加價購折抵金額錯誤的問題
                             Rule = this
                         };
                         matched.Clear();
